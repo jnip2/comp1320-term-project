@@ -31,18 +31,6 @@ const readDirP = (file) => {
   })
 }
 
-const mkdir = (folder) => {
-  return new Promise((resolve, reject) => {
-      fs.mkdir(folder, (err) => {
-          if (err) {
-              reject(err);
-          } else {
-              resolve();
-          }
-      })
-  })
-}
-
 /**
  * Description: decompress file from given pathIn, write to given pathOut 
  *  
