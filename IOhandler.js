@@ -3,8 +3,8 @@
  * File Name: IOhandler.js
  * Description: Collection of functions for files input/output related operations
  * 
- * Created Date: 
- * Author: 
+ * Created Date: November 5, 2021
+ * Author: Joey Nip A01263339
  * 
  */
 
@@ -13,6 +13,35 @@ const unzipper = require('unzipper'),
   PNG = require('pngjs').PNG,
   path = require('path');
 
+let fileArray = [];
+
+const readDirP = (file) => {
+  return new Promise((resolve, reject) => {
+      fs.readdir(file, (err, data) => {
+          if (err) {
+              reject(err);
+          } else {
+            data.forEach(pngFile => {
+              if (pngFile.toString().slice(-3) === "png") {
+                fileArray.push(`./unzipped/${pngFile.toString()}`)}
+              });
+            resolve(fileArray);
+          }
+      })
+  })
+}
+
+const mkdir = (folder) => {
+  return new Promise((resolve, reject) => {
+      fs.mkdir(folder, (err) => {
+          if (err) {
+              reject(err);
+          } else {
+              resolve();
+          }
+      })
+  })
+}
 
 /**
  * Description: decompress file from given pathIn, write to given pathOut 
@@ -21,9 +50,14 @@ const unzipper = require('unzipper'),
  * @param {string} pathOut 
  * @return {promise}
  */
-const unzip = (pathIn, pathOut) => {
 
-};
+const unzip = (pathIn, pathOut) => {
+    return fs.createReadStream(pathIn)
+    .pipe(unzipper.Extract({ path: pathOut }))
+    .on('entry', entry => entry.autodrain())
+    .promise()
+    .then(() => console.log("Extraction operation complete"))
+}
 
 /**
  * Description: read all the png files from given directory and return Promise containing array of each png file path 
@@ -31,9 +65,6 @@ const unzip = (pathIn, pathOut) => {
  * @param {string} path 
  * @return {promise}
  */
-const readDir = dir => {
-
-};
 
 /**
  * Description: Read in png file by given pathIn, 
@@ -43,12 +74,30 @@ const readDir = dir => {
  * @param {string} pathProcessed 
  * @return {promise}
  */
-const grayScale = (pathIn, pathOut) => {
 
-};
+const grayScale = function (pathIn, pathOut) {
+
+    fs.createReadStream(pathIn)
+      .pipe(new PNG({}))
+      .on("parsed", function () {
+        for (var y = 0; y < this.height; y++) {
+          for (var x = 0; x < this.width; x++) {
+            var idx = (this.width * y + x) << 2;
+
+            const conversion = (0.3 * this.data[idx] + 0.59 * this.data[idx + 1] + 0.11 * this.data[idx + 2]);
+    
+            // color manipulation
+            this.data[idx] = conversion;
+            this.data[idx + 1] = conversion;
+            this.data[idx + 2] = conversion;
+          }
+        }
+      this.pack().pipe(fs.createWriteStream(pathOut + `/filtered${pathIn.slice(11)}`));
+    });
+  };
 
 module.exports = {
   unzip,
-  readDir,
+  readDirP,
   grayScale
 };
